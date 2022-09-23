@@ -1,1 +1,1 @@
-# Data7_EDA_In_Shell
+# EDA_In_SQL

@@ -1,0 +1,400 @@
+---
+title: "Data7 Exploratory Data Analysis in Unix Shell"
+author: Greg Chism
+date: 2022-09-22
+format:
+  html:
+    theme: cosmo
+    code-copy: true
+---
+
+![](cover.png){width="362"}
+
+## Purpose of Materials
+
+**Exploratory data analysis of a novel data set with Bash Unix shell**
+
+------------------------------------------------------------------------
+
+## Objectives
+
+1.  Load and explore a data set with summary statistics
+2.  Diagnose missing values in a data set
+
+------------------------------------------------------------------------
+
+## Overview
+
+[Exploratory data analysis](https://en.wikipedia.org/wiki/Exploratory_data_analysis) is an essential first step towards determining the validity of your data and should be performed throughout the data pipeline. However, EDA is often performed too late or not at all.
+
+[Unix Shell](https://en.wikipedia.org/wiki/Unix_shell) is a command-line [shell](https://en.wikipedia.org/wiki/Shell_(computing)) user interface for [Unix-like](https://en.wikipedia.org/wiki/Unix-like) [operating systems](https://en.wikipedia.org/wiki/Operating_system). The shell is used by the operating system to control the execution of the system through [shell scripts](https://en.wikipedia.org/wiki/Shell_script). Though Unix shell has limited mathematical capabilities it can be used to perform EDA. A major disadvantage however is that Unix shell cannot be used to perform [statistical graphics](https://en.wikipedia.org/wiki/Statistical_graphics) and other data visualization methods. For this, I recommend either the [R programming language](https://en.wikipedia.org/wiki/R_(programming_language)), specifically through the [RStudio IDE](https://en.wikipedia.org/wiki/RStudio) and [`ggplot2`](https://ggplot2.tidyverse.org/) from the [`tidyverse`](https://www.tidyverse.org/) package suite, or [Python](https://en.wikipedia.org/wiki/Python_(programming_language)), specifically the [`seaborn`](https://seaborn.pydata.org/) library. You can however use Unix shell to visualize data through R. To learn this I recommend reading [Chapter 7](https://datascienceatthecommandline.com/2e/chapter-7-exploring-data.html) of the [Data Science at the Command Line](https://datascienceatthecommandline.com/2e/index.html) book.
+
+Here, we utilize the [Bash Unix Shell](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) to conduct preliminary exploratory data analysis aimed at diagnosing any major issues within a data set stored in a directory. We introduce a clean and straightforward methodology to uncover issues such as data [outliers](https://en.wikipedia.org/wiki/Outlier), [missing data](https://en.wikipedia.org/wiki/Missing_data), as well as summary statistical reports.
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE) 
+
+options(repos = list(CRAN = "http://cran.rstudio.com/"))
+
+base::Sys.which("bash")
+```
+
+------------------------------------------------------------------------
+
+## Required Setup
+
+You will need to have [`homebrew`](https://brew.sh/) installed and then the [`csvkit`](https://csvkit.readthedocs.io/en/latest/) which is a powerful data exploration toolkit.
+
+```{bash, eval = FALSE}
+
+# Install the csvkit
+brew install csvkit 
+```
+
+We first need to prepare our environment to explore a dataset. In our case, we will move to the directory housing `diabetes.csv`.
+
+**Note** that the `Bash` code chunks will contain all code from previous chunks, where relevant, so that you can see the progression.
+
+#### Listing files
+
+`ls` List files
+
+```{bash}
+ls
+```
+
+#### Move to the data directory
+
+`cd data` change directory to data
+
+```{bash}
+cd data 
+ls
+```
+
+------------------------------------------------------------------------
+
+## Examine and Describe a Data Set
+
+-   Examine columns and data types
+-   Summary statistics
+-   Define box plots
+-   Describe meta data
+
+------------------------------------------------------------------------
+
+### Examine a Data Set
+
+We should always examine a dataset in our databases. Here we are looking at the first 5 rows of the dataset.
+
+#### Head
+
+`head` Head first 8 rows (default)
+
+`-n` Number, add a number to get the number of rows - e.g., 5 rows
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# First 5 rows 
+head -n 5 diabetes_Age.csv
+```
+
+#### Refined `head`: line numbers
+
+`head` Head first 8 rows (default)
+
+`-n` Number, add a number to get the number of rows - e.g., 5 rows
+
+`|` [Pipeline](https://en.wikipedia.org/wiki/Pipeline_(Unix))
+
+`nl` Line numbers
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Line numbers for rows that wrap
+head -n 5 diabetes_Age.csv | nl
+```
+
+#### Column names
+
+[`csvcut`](https://csvkit.readthedocs.io/en/latest/scripts/csvcut.html) Filters and truncates CSV files, but assumes that the file is delimited by commas
+
+`-n` Number, add a number to get the number of rows - e.g., 5 rows
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Examine the headers
+csvcut -n diabetes_Age.csv
+```
+
+#### Data structure
+
+[`csvcut`](https://csvkit.readthedocs.io/en/latest/scripts/csvcut.html) Filters and truncates CSV files, but assumes that the file is delimited by commas
+
+[`csvlook`](https://csvkit.readthedocs.io/en/latest/scripts/csvlook.html) Renders a CSV to the command line in a Markdown-compatible, fixed-width format
+
+`|` [Pipeline](https://en.wikipedia.org/wiki/Pipeline_(Unix))
+
+[`csvlook`](https://csvkit.readthedocs.io/en/latest/scripts/csvlook.html) Renders a CSV to the command line in a Markdown-compatible, fixed-width format
+
+`head` Head first 8 rows (default)
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Examine the dataset, print to fixed-width format
+csvcut diabetes_Age.csv | csvlook | head 
+```
+
+------------------------------------------------------------------------
+
+### Describe your Data
+
+We need to start by seeing what data types our columns actually are.
+
+[`csvsql`](https://csvkit.readthedocs.io/en/latest/scripts/csvsql.html) SQL function to show [SQL data types](https://www.w3schools.com/sql/sql_datatypes.asp) and whether there are `NULL` values
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# SQL function to show data types and if there are NULL values
+csvsql diabetes_Age.csv
+```
+
+------------------------------------------------------------------------
+
+### Unique values
+
+Next we can look at the number of unique values in each column.
+
+[`csvstat`](https://csvkit.readthedocs.io/en/latest/scripts/csvstat.html) Summary statistics toolkit (also see below)
+
+`--unique` Count of unique values
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Number of unique values in each column
+csvstat diabetes_Age.csv --unique
+```
+
+------------------------------------------------------------------------
+
+### Filtering
+
+[`csvgrep`](https://csvkit.readthedocs.io/en/latest/scripts/csvgrep.html) Filter data to rows where certain columns contain a given value or match a regular expression.
+
+`-c` Columns
+
+`-i` Inverse match (does not equal/match)
+
+`-r` REGEX, a string to search for
+
+`"[1]"` Search for 1 values
+
+`|` [Pipeline](https://en.wikipedia.org/wiki/Pipeline_(Unix))
+
+[`csvlook`](https://csvkit.readthedocs.io/en/latest/scripts/csvlook.html) Renders a CSV to the command line in a Markdown-compatible, fixed-width format
+
+`head` Head first 8 rows (default)
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Filter rows with values opposite of 1 in the Outcome column
+csvgrep -c Outcome -i -r "[1]" diabetes_Age.csv | csvlook | head
+```
+
+`awk` Filtering by numerical comparisons
+
+`-F` Filter
+
+`NR` Number of rows that the filter will go through at one time
+
+`|` [Pipeline](https://en.wikipedia.org/wiki/Pipeline_(Unix))
+
+[`csvlook`](https://csvkit.readthedocs.io/en/latest/scripts/csvlook.html) Renders a CSV to the command line in a Markdown-compatible, fixed-width format
+
+`head` Head first 8 rows (default)
+
+```{bash, warning = FALSE}
+# Move to the folder that contains our data
+cd data
+
+# Filter data based on the criteria: column 2 values greater than 50
+< diabetes_Age.csv awk -F, 'NR==1 || ($2 > 50)' | csvcut | csvlook | head
+```
+
+------------------------------------------------------------------------
+
+### Sorting
+
+We might want to sort columns in ascending or descending order.
+
+[`csvsort`](https://csvkit.readthedocs.io/en/latest/scripts/csvsort.html) Sort data by a qualifier, default is ascending
+
+`-c` Column
+
+`-r` Reverse (descending order)
+
+`|` [Pipeline](https://en.wikipedia.org/wiki/Pipeline_(Unix))
+
+[`csvcut`](https://csvkit.readthedocs.io/en/latest/scripts/csvcut.html) Filters and truncates CSV files, but assumes that the file is delimited by commas
+
+[`csvlook`](https://csvkit.readthedocs.io/en/latest/scripts/csvlook.html) Renders a CSV to the command line in a Markdown-compatible, fixed-width format
+
+`head` Head first 8 rows (default)
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Sort data by the Glucose column (ascending order)
+csvsort -c 'Glucose' diabetes_Age.csv | csvcut | csvlook | head
+```
+
+------------------------------------------------------------------------
+
+## Summary Statistics of your Data
+
+### Numerical Variables
+
+Our entire database is numerical data, but we will look at two of the numerical columns, `Glucose` and `Insulin`.
+
+[`csvstat`](https://csvkit.readthedocs.io/en/latest/scripts/csvstat.html) Summary statistics for all columns
+
+`|` [Pipeline](https://en.wikipedia.org/wiki/Pipeline_(Unix))
+
+`head` Head first 8 rows (default)
+
+`-n` Number, add a number to get the number of rows - e.g., 34 rows
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Summary statistics, showing 34 rows of the output
+csvstat diabetes_Age.csv | head -n 34
+```
+
+-   `Type of data`: Data type
+
+-   `Contains null values`: Presence of `Null` values
+
+-   `Unique values`: Number of unique values
+
+-   `Smallest value`: minimum value
+
+-   `Largest value`: maximum value
+
+-   `Sum`: sum of the entire column (numerical only)
+
+-   `Mean`: arithmetic mean
+
+-   `Median`: middle value
+
+-   `StDev`: standard deviation
+
+-   `Most common values`: frequency of 5 most common values
+
+#### **Specific statistics**
+
+You can also look at individual statistics (such as unique above)
+
+**Note**: `Outcome` and `Age_group` have no mean values since they are `boolean` (true/false) and `varchar` (character) data types.
+
+`--mean` Only show arithmetic mean
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Mean of all numerical data columns
+csvstat diabetes_Age.csv --mean 
+```
+
+------------------------------------------------------------------------
+
+### Categorical Variables
+
+`diabetes_Age` has a categorical `Age_group` column categories were created by a qualifier:
+
+`Young`: Age \<= 21
+
+`Middle`: Age between 21 and 30
+
+`Elderly`: Age \> 30
+
+`-c` Column
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Summary statistics of the Age_group column
+csvstat diabetes_age.csv -c Age_group
+```
+
+All of the summary statistics are the same as above except:
+
+-   `Longest value`: number of characters in the longest character value
+
+------------------------------------------------------------------------
+
+## Missing Values (NAs)
+
+We will investigate NA values in the `diabetesNA.csv` dataset.
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Summary statistics, showing 34 rows of the output
+csvstat diabetesNA.csv | head -n 34
+```
+
+`Contains null values` This will be true, but note that these are excluded from calculations
+
+#### Filtering out NAs
+
+[`csvgrep`](https://csvkit.readthedocs.io/en/latest/scripts/csvgrep.html) Filter data to rows where certain columns contain a given value or match a regular expression.
+
+`-c` Columns
+
+`-i` Inverse match (does not equal/match)
+
+`-r` REGEX, a string to search for
+
+`"[NA]"` Search for NA character values
+
+`|` [Pipeline](https://en.wikipedia.org/wiki/Pipeline_(Unix))
+
+`head` Head first 8 rows (default)
+
+`nl` Line numbers
+
+```{bash}
+# Move to the folder that contains our data
+cd data
+
+# Filter data from the Glucose that are not NAs
+csvgrep -c Glucose -i -r "[NA]" diabetesNA.csv | csvcut | csvlook | head  
+```
+
+Notice how NAs are blank in the output
+
+------------------------------------------------------------------------
+
+Created: 09/23/2022 (G. Chism); Last update: 09/23/2022
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/CC_BY-NC-SA.svg/800px-CC_BY-NC-SA.svg.png?20181117113353" width="150" height="50"/> [CC BY-NC-SA](https://creativecommons.org/licenses/by-nc-sa/4.0/)
