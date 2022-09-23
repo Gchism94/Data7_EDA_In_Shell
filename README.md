@@ -1,4 +1,4 @@
-# EDA_In_Shell
+# Data7_EDA_In_Shell
 
 Data7 Exploratory Data Analysis in Unix Shell
 
