@@ -6,6 +6,7 @@ format:
   html:
     theme: cosmo
     code-copy: true
+    toc: true
 ---
 
 ![](cover.png){width="362"}
@@ -46,7 +47,6 @@ base::Sys.which("bash")
 You will need to have [`homebrew`](https://brew.sh/) installed and then the [`csvkit`](https://csvkit.readthedocs.io/en/latest/) which is a powerful data exploration toolkit.
 
 ```{bash, eval = FALSE}
-
 # Install the csvkit
 brew install csvkit 
 ```
@@ -71,6 +71,12 @@ ls
 cd data 
 ls
 ```
+
+`diabetes.csv` Original Pima County Indians Diabetes [dataset](https://www.kaggle.com/datasets/kumargh/pimaindiansdiabetescsv)
+
+`diabetesNA.csv` Dataset with randomly added `NA` values to 30% of rows in each column
+
+`diabetes_Age.csv` Dataset with an added `Age_group` column (see below for qualifier)
 
 ------------------------------------------------------------------------
 
