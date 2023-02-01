@@ -1,0 +1,4 @@
+- source: Data7_EDA_In_Shell.qmd
+  quarto-pub:
+    - id: 88139fee-51ab-4bb9-a3f6-1ff05b6b5f63
+      url: 'https://quartopub.com/sites/gchism/data7-exploratory-data-analysis-in-unix-shell'
